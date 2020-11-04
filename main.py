@@ -2,13 +2,14 @@ import gym
 import numpy as np
 env = gym.make('Taxi-v3')
 env.reset()
-env.render()
+locs = env.locs
+# env.render()
 
 # state = env.encode(0,2,0,0)
 # env.s = state
-i , j ,p, d = env.decode(env.s)
-print("i:", i,"j:",j,"pass:",p,"dest:",d)
-print("state: ",env.s)
+# i , j ,p, d = env.decode(env.s)
+# print("i:", i,"j:",j,"pass:",p,"dest:",d)
+# print("state: ",env.s)
 print(env.P)
 
 
@@ -16,47 +17,80 @@ print(env.P)
 value_arr = np.zeros(500)
 policy_arr = np.zeros(500)
 p_arr = list(env.P.items())
-new_p_arr=[]
-for i in range (500):
+new_p_arr = []
+for i in range(500):
     new_p_arr.append(p_arr[i][1])
-p_arr=new_p_arr
-actions_arr=[]
-for iter in range(20):
+p_arr = new_p_arr
+actions_arr = []
+for iter in range(10):
     prev_policy_arr = np.copy(policy_arr)
 
-    for i in range(0,500):
+    for i in range(0,500):                              ### value iteration
+        act = -1
         max_v = np.NINF
         actions_arr = list(p_arr[i].items())
         new_actions_arr = []
-        for ii in range(6):
+        for ii in range(0, 6):
             new_actions_arr.append(actions_arr[ii][1])
         actions_arr = new_actions_arr
 
         for j in range(0,6):
             # action = list(actions_arr.items())
-            a, b, val, d = actions_arr[j][0]
-            if(max_v < val):
-                max_v = val
+            prob, next_state, val, done = actions_arr[j][0]
+            if(max_v < value_arr[next_state] +val ):
+                max_v = value_arr[next_state]          # found V(s') best
+                act = j
 
-        value_arr[i] += 0.99 * max_v
+        prob, next_state, val, done = actions_arr[act][0]
+        x, y, pass_indx, dest_indx = env.decode(env.s)
+        curr_loc = (x, y)
+        if ( not curr_loc == locs[dest_indx] or not pass_indx == 4):
+            value_arr[i] = val + (0.99 * value_arr[next_state] )
 
-    for i in range(0,500):
+    for i in range(0,500):                               ### policy iteration
         act = -1
         max_v = np.NINF
         actions_arr = list(p_arr[i].items())
         new_actions_arr = []
-        for iii in range(6):
+        for iii in range(0,6):
             new_actions_arr.append(actions_arr[iii][1])
         actions_arr = new_actions_arr
-        for j in range(0,6):
-            a, b, val, d = actions_arr[j][0]
-            if (max_v < val):
-                max_v = val
+        for j in range(0, 6):
+            prob, next_state, val, done = actions_arr[j][0]
+            if (max_v < value_arr[next_state] + val):
+                max_v = value_arr[next_state]
                 act = j
-
+        prob, next_state, val, done = actions_arr[act][0]
         policy_arr[i] = act
-print("policy array:",policy_arr)
-print("value array:",value_arr)
+    if(np.array_equal(policy_arr,prev_policy_arr)):
+        print("stoped learning",i)
+        break
+
+
+
+
+
+
+print("policy array:\n" , policy_arr)
+print("value array:\n" , value_arr)
+
+
+
+env.render()
+stop = False
+iter = 0
+while(not done and iter < 30):
+    iter += 1
+    state = env.s
+    # print("action: ", policy_arr[state])
+    i, j, pass_indx, dest_indx = env.decode(env.s)
+    curr_loc = (i, j)
+    if (curr_loc == locs[dest_indx] and pass_indx == 4):
+        done = True
+    env.step(int(policy_arr[state]))
+    env.render()
+
+
     # if(np.equal(policy_arr,prev_policy_arr)):
     #     break
 
