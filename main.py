@@ -1,5 +1,6 @@
 import gym
 import numpy as np
+import taxi_functions as tf
 env = gym.make('Taxi-v3')
 env.reset()
 locs = env.locs
@@ -15,14 +16,15 @@ print(env.P)
 
 
 value_arr = np.zeros(500)
-policy_arr = np.zeros(500)
+policy_arr = np.random.randint(0,6,500)
 p_arr = list(env.P.items())
 new_p_arr = []
 for i in range(500):
     new_p_arr.append(p_arr[i][1])
 p_arr = new_p_arr
+# p_arr = tf.tuple_arr_to_arr(p_arr)
 actions_arr = []
-for iter in range(10):
+for iter in range(500):
     prev_policy_arr = np.copy(policy_arr)
 
     for i in range(0,500):                              ### value iteration
@@ -33,6 +35,7 @@ for iter in range(10):
         for ii in range(0, 6):
             new_actions_arr.append(actions_arr[ii][1])
         actions_arr = new_actions_arr
+        # actions_arr = tf.tuple_arr_to_arr(actions_arr)
 
         for j in range(0,6):
             # action = list(actions_arr.items())
@@ -45,16 +48,17 @@ for iter in range(10):
         x, y, pass_indx, dest_indx = env.decode(env.s)
         curr_loc = (x, y)
         if ( not curr_loc == locs[dest_indx] or not pass_indx == 4):
-            value_arr[i] = val + (0.99 * value_arr[next_state] )
+            value_arr[i] = val + (0.95 * value_arr[next_state])
 
     for i in range(0,500):                               ### policy iteration
         act = -1
         max_v = np.NINF
         actions_arr = list(p_arr[i].items())
         new_actions_arr = []
-        for iii in range(0,6):
-            new_actions_arr.append(actions_arr[iii][1])
+        for ii in range(0, 6):
+            new_actions_arr.append(actions_arr[ii][1])
         actions_arr = new_actions_arr
+        # actions_arr = tf.tuple_arr_to_arr(actions_arr)
         for j in range(0, 6):
             prob, next_state, val, done = actions_arr[j][0]
             if (max_v < value_arr[next_state] + val):
@@ -62,8 +66,8 @@ for iter in range(10):
                 act = j
         prob, next_state, val, done = actions_arr[act][0]
         policy_arr[i] = act
-    if(np.array_equal(policy_arr,prev_policy_arr)):
-        print("stoped learning",i)
+    if(np.array_equal(policy_arr,prev_policy_arr)):            #  Reached optimal policy
+        print("stoped learning",iter)
         break
 
 
@@ -93,7 +97,6 @@ while(not done and iter < 30):
 
     # if(np.equal(policy_arr,prev_policy_arr)):
     #     break
-
 
 
 # state = env.encode(0, 0, 0, 0) # (taxi row, taxi column, passenger index, destination index)
