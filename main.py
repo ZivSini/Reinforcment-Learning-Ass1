@@ -80,6 +80,8 @@ print("value array:\n" , value_arr)
 
 
 
+
+
 env.render()
 stop = False
 iter = 0
@@ -93,6 +95,26 @@ while(not done and iter < 30):
         done = True
     env.step(int(policy_arr[state]))
     env.render()
+
+
+
+
+
+imidiate_reward = 0
+next_state = 0
+
+
+for i in range(0,5):
+    for j in range(0,5):
+        for pass_indx in range(0,5):
+            for dest_indx in range(0,4):
+                for act in range(0,6):
+                    state = env.encode(i,j,pass_indx,dest_indx)
+                    env.s = state
+                    a,b,c,d=env.step(act)
+                    print(a,b,c,d)
+
+
 
 
     # if(np.equal(policy_arr,prev_policy_arr)):
